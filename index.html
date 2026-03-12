@@ -212,37 +212,45 @@ APPS.forEach((a,i)=>{
   const c=document.createElement('div');
   c.className='w-card';
   c.style.animationDelay=(i*0.07)+'s';
-  c.innerHTML='<div class="wc-top"><div class="wc-icon">'+a.icon+'</div><div class="wc-name">'+a.short+'</div></div><div class="wc-sub">'+a.desc+'</div><div><span class="wc-tag">'+a.section+'</span></div>';
+  c.innerHTML='<div class="wc-top"><div class="wc-icon">'+a.icon+'</div><div class="wc-name">'+a.short+'</div></div><div class="wc-sub">'+a.desc+'</div><div style="display:flex;align-items:center;justify-content:space-between;"><span class="wc-tag">'+a.section+'</span>'+(a.url!=='__EMBED__'?'<span style="font-size:0.58rem;color:var(--text-faint);">↗ nueva pestaña</span>':'<span style="font-size:0.58rem;color:var(--green);">● embebido</span>')+'</div>';
   c.onclick=()=>loadApp(i);
   wg.appendChild(c);
 });
 function loadApp(idx){
+  const app=APPS[idx];
+
+  // Apps externas → abrir en nueva pestaña directamente
+  if(app.url !== '__EMBED__'){
+    window.open(app.url, '_blank');
+    // Marcar como activo visualmente en sidebar
+    APPS.forEach((_,i)=>document.getElementById('nav-'+i)&&document.getElementById('nav-'+i).classList.toggle('active',i===idx));
+    document.getElementById('topTitle').textContent=app.name;
+    document.getElementById('bcCur').textContent=app.short;
+    const dot=document.getElementById('dot-'+idx);
+    if(dot) dot.className='ni-dot on';
+    return;
+  }
+
+  // App embebida (Metas Individuales) → cargar en iframe
   if(current===idx) return;
   current=idx;
-  const app=APPS[idx];
-  APPS.forEach((_,i)=>document.getElementById('nav-'+i).classList.toggle('active',i===idx));
+  APPS.forEach((_,i)=>document.getElementById('nav-'+i)&&document.getElementById('nav-'+i).classList.toggle('active',i===idx));
   document.getElementById('welcome').classList.add('gone');
-  APPS.forEach((_,i)=>document.getElementById('frame-'+i).classList.remove('active'));
+  APPS.forEach((_,i)=>{ const f=document.getElementById('frame-'+i); if(f) f.classList.remove('active'); });
   document.getElementById('topTitle').textContent=app.name;
   document.getElementById('bcCur').textContent=app.short;
   const frame=document.getElementById('frame-'+idx);
-  frame.classList.add('active');
+  if(frame) frame.classList.add('active');
   if(!loaded[idx]){
     showLoad(app.name);
     const dot=document.getElementById('dot-'+idx);
     if(dot) dot.className='ni-dot spin';
-    if(app.url==='__EMBED__'){
-      try{
-        const html=atob(B64);
-        const decoder=new TextDecoder('utf-8');
-        const bytes=Uint8Array.from(atob(B64),c=>c.charCodeAt(0));
-        const decoded=decoder.decode(bytes);
-        const blob=new Blob([decoded],{type:'text/html;charset=utf-8'});
-        frame.src=URL.createObjectURL(blob);
-      }catch(e){console.error('Embed error:',e);}
-    } else {
-      frame.src=app.url;
-    }
+    try{
+      const bytes=Uint8Array.from(atob(B64),c=>c.charCodeAt(0));
+      const decoded=new TextDecoder('utf-8').decode(bytes);
+      const blob=new Blob([decoded],{type:'text/html;charset=utf-8'});
+      frame.src=URL.createObjectURL(blob);
+    }catch(e){console.error('Embed error:',e);}
     frame.onload=()=>{hideLoad();loaded[idx]=true;if(dot) dot.className='ni-dot on';};
     setTimeout(()=>{hideLoad();loaded[idx]=true;if(dot) dot.className='ni-dot on';},12000);
   }
