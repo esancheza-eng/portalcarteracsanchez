@@ -218,42 +218,14 @@ APPS.forEach((a,i)=>{
 });
 function loadApp(idx){
   const app=APPS[idx];
-
-  // Apps externas → abrir en nueva pestaña directamente
-  if(app.url !== '__EMBED__'){
-    window.open(app.url, '_blank');
-    // Marcar como activo visualmente en sidebar
-    APPS.forEach((_,i)=>document.getElementById('nav-'+i)&&document.getElementById('nav-'+i).classList.toggle('active',i===idx));
-    document.getElementById('topTitle').textContent=app.name;
-    document.getElementById('bcCur').textContent=app.short;
-    const dot=document.getElementById('dot-'+idx);
-    if(dot) dot.className='ni-dot on';
-    return;
-  }
-
-  // App embebida (Metas Individuales) → cargar en iframe
-  if(current===idx) return;
-  current=idx;
-  APPS.forEach((_,i)=>document.getElementById('nav-'+i)&&document.getElementById('nav-'+i).classList.toggle('active',i===idx));
-  document.getElementById('welcome').classList.add('gone');
-  APPS.forEach((_,i)=>{ const f=document.getElementById('frame-'+i); if(f) f.classList.remove('active'); });
+  // Todas las apps abren en nueva pestaña
+  window.open(app.url, '_blank');
+  // Actualizar sidebar visualmente
+  APPS.forEach((_,i)=>{ const n=document.getElementById('nav-'+i); if(n) n.classList.toggle('active',i===idx); });
   document.getElementById('topTitle').textContent=app.name;
   document.getElementById('bcCur').textContent=app.short;
-  const frame=document.getElementById('frame-'+idx);
-  if(frame) frame.classList.add('active');
-  if(!loaded[idx]){
-    showLoad(app.name);
-    const dot=document.getElementById('dot-'+idx);
-    if(dot) dot.className='ni-dot spin';
-    try{
-      const bytes=Uint8Array.from(atob(B64),c=>c.charCodeAt(0));
-      const decoded=new TextDecoder('utf-8').decode(bytes);
-      const blob=new Blob([decoded],{type:'text/html;charset=utf-8'});
-      frame.src=URL.createObjectURL(blob);
-    }catch(e){console.error('Embed error:',e);}
-    frame.onload=()=>{hideLoad();loaded[idx]=true;if(dot) dot.className='ni-dot on';};
-    setTimeout(()=>{hideLoad();loaded[idx]=true;if(dot) dot.className='ni-dot on';},12000);
-  }
+  const dot=document.getElementById('dot-'+idx);
+  if(dot) dot.className='ni-dot on';
 }
 function showLoad(name){
   document.getElementById('loadLabel').textContent='Cargando '+name+'...';
